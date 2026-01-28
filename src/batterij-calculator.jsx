@@ -36,11 +36,13 @@ const styles = {
     background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #064e3b 100%)',
     color: 'white',
     padding: '32px 16px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box'
   },
   maxWidth: {
-    maxWidth: '1200px',
-    margin: '0 auto'
+    maxWidth: '1000px',
+    margin: '0 auto',
+    boxSizing: 'border-box'
   },
   header: {
     textAlign: 'center',
@@ -118,7 +120,11 @@ const styles = {
     borderRadius: '12px',
     color: 'white',
     fontSize: '1rem',
-    outline: 'none'
+    outline: 'none',
+    boxSizing: 'border-box'
+  },
+  inputGroup: {
+    marginBottom: '0'
   },
   label: {
     display: 'block',
@@ -128,8 +134,8 @@ const styles = {
   },
   grid2: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '16px'
+    gridTemplateColumns: '1fr 1fr',
+    gap: '24px'
   },
   button: {
     width: '100%',
