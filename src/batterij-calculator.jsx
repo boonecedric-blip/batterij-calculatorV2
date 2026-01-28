@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area } from 'recharts';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 // =============================================
 // BELPEX MARKTPRIJZEN DATA (2024-2025)
@@ -931,43 +933,138 @@ export default function BatterijCalculator() {
   const generatePDF = () => {
     if (!results) return;
     
+    const doc = new jsPDF();
     const monthNames = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
     
-    let monthlyRows = '';
+    // Titel
+    doc.setFontSize(20);
+    doc.setTextColor(16, 185, 129);
+    doc.text('Slimme Batterij Calculator - Hivolta', 20, 20);
+    
+    // Subtitel
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Data: ${results.dataYear} | Batterij: ${batteryCapacity} kWh | Prijs: ${formatCurrency(batteryPrice)}`, 20, 28);
+    
+    // Lijn
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.line(20, 32, 190, 32);
+    
+    // Scenario vergelijking header
+    doc.setFontSize(14);
+    doc.setTextColor(50, 50, 50);
+    doc.text('Jaarlijkse Vergelijking', 20, 42);
+    
+    // Scenario boxes
+    const boxY = 48;
+    const boxWidth = 55;
+    const boxHeight = 45;
+    
+    // Box 1: Huidige
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(20, boxY, boxWidth, boxHeight, 3, 3, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text('Huidige (Enkel PV)', 25, boxY + 8);
+    doc.setFontSize(16);
+    doc.setTextColor(220, 38, 38);
+    doc.text(formatCurrency(results.scenario1.nettoKosten), 25, boxY + 20);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Afname: ${results.scenario1.totalAfnameKwh.toFixed(0)} kWh`, 25, boxY + 28);
+    doc.text(`Injectie: ${results.scenario1.totalInjectieKwh.toFixed(0)} kWh`, 25, boxY + 34);
+    doc.text(`Zelfconsumptie: ${results.scenario1.zelfconsumptiegraad.toFixed(1)}%`, 25, boxY + 40);
+    
+    // Box 2: Domme Batterij
+    doc.setFillColor(239, 246, 255);
+    doc.roundedRect(80, boxY, boxWidth, boxHeight, 3, 3, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text('Domme Batterij', 85, boxY + 8);
+    doc.setFontSize(16);
+    doc.setTextColor(59, 130, 246);
+    doc.text(formatCurrency(results.scenario2.nettoKosten), 85, boxY + 20);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Afname: ${results.scenario2.totalAfnameKwh.toFixed(0)} kWh`, 85, boxY + 28);
+    doc.text(`Besparing: ${formatCurrency(results.scenario2.savingsVsNoBattery)}/jaar`, 85, boxY + 34);
+    doc.text(`Terugverdientijd: ${results.scenario2.paybackYears === Infinity ? '∞' : results.scenario2.paybackYears.toFixed(1) + ' jaar'}`, 85, boxY + 40);
+    
+    // Box 3: Slimme Batterij
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(140, boxY, boxWidth, boxHeight, 3, 3, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text('Slimme Batterij', 145, boxY + 8);
+    doc.setFontSize(16);
+    doc.setTextColor(16, 185, 129);
+    doc.text(formatCurrency(results.scenario3.nettoKosten), 145, boxY + 20);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Afname: ${results.scenario3.totalAfnameKwh.toFixed(0)} kWh`, 145, boxY + 28);
+    doc.text(`Besparing: ${formatCurrency(results.scenario3.savingsVsNoBattery)}/jaar`, 145, boxY + 34);
+    doc.text(`Terugverdientijd: ${results.scenario3.paybackYears === Infinity ? '∞' : results.scenario3.paybackYears.toFixed(1) + ' jaar'}`, 145, boxY + 40);
+    
+    // Maandelijks overzicht header
+    doc.setFontSize(14);
+    doc.setTextColor(50, 50, 50);
+    doc.text('Maandelijks Overzicht', 20, 105);
+    
+    // Tabel data voorbereiden
+    const tableData = [];
     results.monthlyData.forEach(month => {
       const mIdx = parseInt(month.month.split('-')[1]) - 1;
       const mName = monthNames[mIdx];
       
-      monthlyRows += `
-        <tr style="background:#f8fafc"><td rowspan="3" style="font-weight:bold">${mName}</td><td>Huidige</td><td style="text-align:right">${month.original.afnameKwh.toFixed(1)}</td><td style="text-align:right">${month.original.injectieKwh.toFixed(1)}</td><td style="text-align:right">${(month.original.avgAfnamePrice * 100).toFixed(1)}</td><td style="text-align:right">${(month.original.avgInjectiePrice * 100).toFixed(1)}</td><td style="text-align:right;color:#dc2626">${formatCurrency(month.original.nettoKost)}</td></tr>
-        <tr style="background:#eff6ff"><td>Dom</td><td style="text-align:right">${month.dumb.afnameKwh.toFixed(1)}</td><td style="text-align:right">${month.dumb.injectieKwh.toFixed(1)}</td><td style="text-align:right">${(month.dumb.avgAfnamePrice * 100).toFixed(1)}</td><td style="text-align:right">${(month.dumb.avgInjectiePrice * 100).toFixed(1)}</td><td style="text-align:right;color:#3b82f6">${formatCurrency(month.dumb.nettoKost)}</td></tr>
-        <tr style="background:#ecfdf5"><td>Slim</td><td style="text-align:right">${month.smart.afnameKwh.toFixed(1)}</td><td style="text-align:right">${month.smart.injectieKwh.toFixed(1)}</td><td style="text-align:right">${(month.smart.avgAfnamePrice * 100).toFixed(1)}</td><td style="text-align:right">${(month.smart.avgInjectiePrice * 100).toFixed(1)}</td><td style="text-align:right;color:#10b981">${formatCurrency(month.smart.nettoKost)}</td></tr>
-      `;
+      tableData.push([mName, 'Huidige', month.original.afnameKwh.toFixed(1), month.original.injectieKwh.toFixed(1), (month.original.avgAfnamePrice * 100).toFixed(1), (month.original.avgInjectiePrice * 100).toFixed(1), formatCurrency(month.original.nettoKost)]);
+      tableData.push(['', 'Dom', month.dumb.afnameKwh.toFixed(1), month.dumb.injectieKwh.toFixed(1), (month.dumb.avgAfnamePrice * 100).toFixed(1), (month.dumb.avgInjectiePrice * 100).toFixed(1), formatCurrency(month.dumb.nettoKost)]);
+      tableData.push(['', 'Slim', month.smart.afnameKwh.toFixed(1), month.smart.injectieKwh.toFixed(1), (month.smart.avgAfnamePrice * 100).toFixed(1), (month.smart.avgInjectiePrice * 100).toFixed(1), formatCurrency(month.smart.nettoKost)]);
     });
     
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Batterij Rapport - Hivolta</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#1e293b}h1{color:#10b981;border-bottom:3px solid #10b981;padding-bottom:10px}h2{margin-top:30px;color:#334155}table{width:100%;border-collapse:collapse;margin:20px 0;font-size:12px}th,td{padding:8px;border:1px solid #e2e8f0}th{background:#f1f5f9}.box{display:inline-block;width:30%;padding:15px;margin:1%;border-radius:8px;vertical-align:top}.box-gray{background:#f1f5f9;border:2px solid #cbd5e1}.box-blue{background:#eff6ff;border:2px solid #3b82f6}.box-green{background:#ecfdf5;border:2px solid #10b981}.cost{font-size:24px;font-weight:bold;margin:10px 0}.disclaimer{margin-top:30px;padding:15px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:11px;color:#92400e}@media print{body{padding:10px}.box{width:31%}}</style></head><body>
-    <h1>Slimme Batterij Calculator - Hivolta</h1><p>Data: ${results.dataYear} | Batterij: ${batteryCapacity} kWh | Prijs: ${formatCurrency(batteryPrice)}</p>
-    <h2>Jaarlijkse Vergelijking</h2>
-    <div class="box box-gray"><h3>Huidige (Enkel PV)</h3><div class="cost" style="color:#dc2626">${formatCurrency(results.scenario1.nettoKosten)}</div><p>Afname: ${results.scenario1.totalAfnameKwh.toFixed(0)} kWh<br>Injectie: ${results.scenario1.totalInjectieKwh.toFixed(0)} kWh<br>Zelfconsumptie: ${results.scenario1.zelfconsumptiegraad.toFixed(1)}%</p></div>
-    <div class="box box-blue"><h3>Domme Batterij</h3><div class="cost" style="color:#3b82f6">${formatCurrency(results.scenario2.nettoKosten)}</div><p>Afname: ${results.scenario2.totalAfnameKwh.toFixed(0)} kWh<br>Injectie: ${results.scenario2.totalInjectieKwh.toFixed(0)} kWh<br>Besparing: ${formatCurrency(results.scenario2.savingsVsNoBattery)}/jaar<br>Terugverdientijd: ${results.scenario2.paybackYears === Infinity ? '∞' : results.scenario2.paybackYears.toFixed(1) + ' jaar'}</p></div>
-    <div class="box box-green"><h3>Slimme Batterij</h3><div class="cost" style="color:#10b981">${formatCurrency(results.scenario3.nettoKosten)}</div><p>Afname: ${results.scenario3.totalAfnameKwh.toFixed(0)} kWh<br>Injectie: ${results.scenario3.totalInjectieKwh.toFixed(0)} kWh<br>Besparing: ${formatCurrency(results.scenario3.savingsVsNoBattery)}/jaar<br>Terugverdientijd: ${results.scenario3.paybackYears === Infinity ? '∞' : results.scenario3.paybackYears.toFixed(1) + ' jaar'}<br>Extra vs dom: +${formatCurrency(results.scenario3.savingsVsDumb)}/jaar</p></div>
-    <h2>Maandelijks Overzicht</h2><table><tr><th>Maand</th><th>Scenario</th><th>Afname (kWh)</th><th>Injectie (kWh)</th><th>Gem. Afname (c/kWh)</th><th>Gem. Injectie (c/kWh)</th><th>Maandkost</th></tr>${monthlyRows}
-    <tr style="background:#f1f5f9;font-weight:bold"><td>TOTAAL</td><td>Huidige</td><td style="text-align:right">${results.scenario1.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario1.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(afnameTarief*100).toFixed(1)}</td><td style="text-align:right">${(injectieTarief*100).toFixed(1)}</td><td style="text-align:right;color:#dc2626">${formatCurrency(results.scenario1.nettoKosten)}</td></tr>
-    <tr style="background:#eff6ff;font-weight:bold"><td></td><td>Dom</td><td style="text-align:right">${results.scenario2.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario2.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(afnameTarief*100).toFixed(1)}</td><td style="text-align:right">${(injectieTarief*100).toFixed(1)}</td><td style="text-align:right;color:#3b82f6">${formatCurrency(results.scenario2.nettoKosten)}</td></tr>
-    <tr style="background:#ecfdf5;font-weight:bold"><td></td><td>Slim</td><td style="text-align:right">${results.scenario3.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario3.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(results.scenario3.avgAfnamePrice*100).toFixed(1)}</td><td style="text-align:right">${(results.scenario3.avgInjectiePrice*100).toFixed(1)}</td><td style="text-align:right;color:#10b981">${formatCurrency(results.scenario3.nettoKosten)}</td></tr>
-    </table>
-    <div class="disclaimer"><strong>⚠️ Disclaimer:</strong> Deze calculator geeft een schatting op basis van historische verbruiksdata en marktprijzen. De werkelijke besparingen kunnen afwijken door veranderingen in energieprijzen, verbruikspatronen, weersomstandigheden en andere factoren. Dit is geen garantie of belofte van toekomstige resultaten. Raadpleeg een specialist voor persoonlijk advies.</div>
-    <p style="color:#64748b;font-size:12px;margin-top:20px">Gegenereerd op ${new Date().toLocaleDateString('nl-BE')} door Hivolta | Open in browser en druk Ctrl+P om als PDF op te slaan</p></body></html>`;
+    // Totalen
+    tableData.push(['TOTAAL', 'Huidige', results.scenario1.totalAfnameKwh.toFixed(0), results.scenario1.totalInjectieKwh.toFixed(0), (afnameTarief*100).toFixed(1), (injectieTarief*100).toFixed(1), formatCurrency(results.scenario1.nettoKosten)]);
+    tableData.push(['', 'Dom', results.scenario2.totalAfnameKwh.toFixed(0), results.scenario2.totalInjectieKwh.toFixed(0), (afnameTarief*100).toFixed(1), (injectieTarief*100).toFixed(1), formatCurrency(results.scenario2.nettoKosten)]);
+    tableData.push(['', 'Slim', results.scenario3.totalAfnameKwh.toFixed(0), results.scenario3.totalInjectieKwh.toFixed(0), (results.scenario3.avgAfnamePrice*100).toFixed(1), (results.scenario3.avgInjectiePrice*100).toFixed(1), formatCurrency(results.scenario3.nettoKosten)]);
     
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `batterij-rapport-${results.dataYear}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Tabel tekenen
+    doc.autoTable({
+      startY: 110,
+      head: [['Maand', 'Scenario', 'Afname (kWh)', 'Injectie (kWh)', 'Gem.Afn (c)', 'Gem.Inj (c)', 'Kost']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [241, 245, 249], textColor: [50, 50, 50], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      columnStyles: {
+        0: { cellWidth: 18 },
+        1: { cellWidth: 18 },
+        2: { cellWidth: 25, halign: 'right' },
+        3: { cellWidth: 25, halign: 'right' },
+        4: { cellWidth: 22, halign: 'right' },
+        5: { cellWidth: 22, halign: 'right' },
+        6: { cellWidth: 22, halign: 'right' }
+      }
+    });
+    
+    // Disclaimer
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFillColor(254, 243, 199);
+    doc.roundedRect(20, finalY, 170, 25, 2, 2, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(146, 64, 14);
+    doc.text('⚠️ Disclaimer: Deze calculator geeft een schatting op basis van historische verbruiksdata en marktprijzen.', 25, finalY + 6);
+    doc.text('De werkelijke besparingen kunnen afwijken door veranderingen in energieprijzen, verbruikspatronen,', 25, finalY + 11);
+    doc.text('weersomstandigheden en andere factoren. Dit is geen garantie of belofte van toekomstige resultaten.', 25, finalY + 16);
+    doc.text('Raadpleeg een specialist voor persoonlijk advies.', 25, finalY + 21);
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Gegenereerd op ${new Date().toLocaleDateString('nl-BE')} door Hivolta`, 20, finalY + 35);
+    
+    // Download
+    doc.save(`batterij-rapport-hivolta-${results.dataYear}.pdf`);
   };
 
   return (
@@ -1267,9 +1364,6 @@ export default function BatterijCalculator() {
               <button onClick={generatePDF} style={styles.downloadBtn}>
                 📥 Download Rapport als PDF
               </button>
-              <p style={{color:'#64748b',fontSize:'0.875rem',marginTop:'8px'}}>
-                Open het bestand en druk Ctrl+P om als PDF op te slaan
-              </p>
             </div>
             
             {/* Disclaimer */}
