@@ -945,8 +945,8 @@ export default function BatterijCalculator() {
       `;
     });
     
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Batterij Rapport</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#1e293b}h1{color:#10b981;border-bottom:3px solid #10b981;padding-bottom:10px}h2{margin-top:30px;color:#334155}table{width:100%;border-collapse:collapse;margin:20px 0;font-size:12px}th,td{padding:8px;border:1px solid #e2e8f0}th{background:#f1f5f9}.box{display:inline-block;width:30%;padding:15px;margin:1%;border-radius:8px;vertical-align:top}.box-gray{background:#f1f5f9;border:2px solid #cbd5e1}.box-blue{background:#eff6ff;border:2px solid #3b82f6}.box-green{background:#ecfdf5;border:2px solid #10b981}.cost{font-size:24px;font-weight:bold;margin:10px 0}@media print{body{padding:10px}.box{width:31%}}</style></head><body>
-    <h1>Slimme Batterij Calculator - Rapport</h1><p>Data: ${results.dataYear} | Batterij: ${batteryCapacity} kWh | Prijs: ${formatCurrency(batteryPrice)}</p>
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Batterij Rapport - Hivolta</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#1e293b}h1{color:#10b981;border-bottom:3px solid #10b981;padding-bottom:10px}h2{margin-top:30px;color:#334155}table{width:100%;border-collapse:collapse;margin:20px 0;font-size:12px}th,td{padding:8px;border:1px solid #e2e8f0}th{background:#f1f5f9}.box{display:inline-block;width:30%;padding:15px;margin:1%;border-radius:8px;vertical-align:top}.box-gray{background:#f1f5f9;border:2px solid #cbd5e1}.box-blue{background:#eff6ff;border:2px solid #3b82f6}.box-green{background:#ecfdf5;border:2px solid #10b981}.cost{font-size:24px;font-weight:bold;margin:10px 0}.disclaimer{margin-top:30px;padding:15px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:11px;color:#92400e}@media print{body{padding:10px}.box{width:31%}}</style></head><body>
+    <h1>Slimme Batterij Calculator - Hivolta</h1><p>Data: ${results.dataYear} | Batterij: ${batteryCapacity} kWh | Prijs: ${formatCurrency(batteryPrice)}</p>
     <h2>Jaarlijkse Vergelijking</h2>
     <div class="box box-gray"><h3>Huidige (Enkel PV)</h3><div class="cost" style="color:#dc2626">${formatCurrency(results.scenario1.nettoKosten)}</div><p>Afname: ${results.scenario1.totalAfnameKwh.toFixed(0)} kWh<br>Injectie: ${results.scenario1.totalInjectieKwh.toFixed(0)} kWh<br>Zelfconsumptie: ${results.scenario1.zelfconsumptiegraad.toFixed(1)}%</p></div>
     <div class="box box-blue"><h3>Domme Batterij</h3><div class="cost" style="color:#3b82f6">${formatCurrency(results.scenario2.nettoKosten)}</div><p>Afname: ${results.scenario2.totalAfnameKwh.toFixed(0)} kWh<br>Injectie: ${results.scenario2.totalInjectieKwh.toFixed(0)} kWh<br>Besparing: ${formatCurrency(results.scenario2.savingsVsNoBattery)}/jaar<br>Terugverdientijd: ${results.scenario2.paybackYears === Infinity ? '∞' : results.scenario2.paybackYears.toFixed(1) + ' jaar'}</p></div>
@@ -955,7 +955,9 @@ export default function BatterijCalculator() {
     <tr style="background:#f1f5f9;font-weight:bold"><td>TOTAAL</td><td>Huidige</td><td style="text-align:right">${results.scenario1.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario1.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(afnameTarief*100).toFixed(1)}</td><td style="text-align:right">${(injectieTarief*100).toFixed(1)}</td><td style="text-align:right;color:#dc2626">${formatCurrency(results.scenario1.nettoKosten)}</td></tr>
     <tr style="background:#eff6ff;font-weight:bold"><td></td><td>Dom</td><td style="text-align:right">${results.scenario2.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario2.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(afnameTarief*100).toFixed(1)}</td><td style="text-align:right">${(injectieTarief*100).toFixed(1)}</td><td style="text-align:right;color:#3b82f6">${formatCurrency(results.scenario2.nettoKosten)}</td></tr>
     <tr style="background:#ecfdf5;font-weight:bold"><td></td><td>Slim</td><td style="text-align:right">${results.scenario3.totalAfnameKwh.toFixed(0)}</td><td style="text-align:right">${results.scenario3.totalInjectieKwh.toFixed(0)}</td><td style="text-align:right">${(results.scenario3.avgAfnamePrice*100).toFixed(1)}</td><td style="text-align:right">${(results.scenario3.avgInjectiePrice*100).toFixed(1)}</td><td style="text-align:right;color:#10b981">${formatCurrency(results.scenario3.nettoKosten)}</td></tr>
-    </table><p style="color:#64748b;font-size:12px;margin-top:30px">Gegenereerd op ${new Date().toLocaleDateString('nl-BE')} | Open in browser en druk Ctrl+P om als PDF op te slaan</p></body></html>`;
+    </table>
+    <div class="disclaimer"><strong>⚠️ Disclaimer:</strong> Deze calculator geeft een schatting op basis van historische verbruiksdata en marktprijzen. De werkelijke besparingen kunnen afwijken door veranderingen in energieprijzen, verbruikspatronen, weersomstandigheden en andere factoren. Dit is geen garantie of belofte van toekomstige resultaten. Raadpleeg een specialist voor persoonlijk advies.</div>
+    <p style="color:#64748b;font-size:12px;margin-top:20px">Gegenereerd op ${new Date().toLocaleDateString('nl-BE')} door Hivolta | Open in browser en druk Ctrl+P om als PDF op te slaan</p></body></html>`;
     
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -973,7 +975,7 @@ export default function BatterijCalculator() {
       <div style={styles.maxWidth}>
         {/* Header */}
         <div style={styles.header}>
-          <h1 style={styles.title}>🔋 Slimme Batterij Calculator</h1>
+          <h1 style={styles.title}>🔋 Slimme Batterij Calculator - Hivolta</h1>
           <p style={styles.subtitle}>Bereken de terugverdientijd met jouw Fluvius data</p>
         </div>
         
@@ -1263,10 +1265,19 @@ export default function BatterijCalculator() {
             {/* PDF Download */}
             <div style={{textAlign:'center',marginTop:'24px'}}>
               <button onClick={generatePDF} style={styles.downloadBtn}>
-                📥 Download Rapport (HTML)
+                📥 Download Rapport als PDF
               </button>
               <p style={{color:'#64748b',fontSize:'0.875rem',marginTop:'8px'}}>
                 Open het bestand en druk Ctrl+P om als PDF op te slaan
+              </p>
+            </div>
+            
+            {/* Disclaimer */}
+            <div style={{marginTop:'32px',padding:'16px',background:'rgba(255,255,255,0.05)',borderRadius:'12px',border:'1px solid rgba(255,255,255,0.1)'}}>
+              <p style={{color:'#94a3b8',fontSize:'0.8rem',margin:0,lineHeight:'1.5'}}>
+                <strong style={{color:'#fbbf24'}}>⚠️ Disclaimer:</strong> Deze calculator geeft een schatting op basis van historische verbruiksdata en marktprijzen. 
+                De werkelijke besparingen kunnen afwijken door veranderingen in energieprijzen, verbruikspatronen, weersomstandigheden en andere factoren. 
+                Dit is geen garantie of belofte van toekomstige resultaten. Raadpleeg een specialist voor persoonlijk advies.
               </p>
             </div>
           </div>
@@ -1274,7 +1285,7 @@ export default function BatterijCalculator() {
         
         {/* Footer */}
         <div style={styles.footer}>
-          <p>Gebaseerd op Belpex marktprijzen {results?.dataYear || '2024-2025'}</p>
+          <p>Hivolta | Gebaseerd op Belpex marktprijzen {results?.dataYear || '2024-2025'}</p>
         </div>
       </div>
     </div>
